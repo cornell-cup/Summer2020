@@ -137,13 +137,13 @@ void setup() {
 
 ISR (SPI_STC_vect) { //SPI Interrupt Service Routine
  // digitalWrite(3,1);
-  Serial.println("entered ISR");
-  if (SPDR != c)
-    Serial.println("Value has been changed");
+  Serial.println("entered ISR"); //debugging print line to indicate the beginning of the interrupt sequence
+  if (SPDR != c)  //if the new value does not equal the value already contained in SPDR
+    Serial.println("Value has been changed"); //debugging print line to show value has changed successfully
   byte c = SPDR; //read byte from SPI data register
   updated = c;// save data in the next index in the array buff
   Serial.print("ISR Value: ");
-  Serial.println(updated);
+  Serial.println(updated); //debugging statement to check if value has been changed successfully
  // if (c == '\r') //check for the end of the word
   process = true;
   
@@ -271,7 +271,7 @@ void PID() {
 
 }
 
-void moveForward() {
+void moveForward() {  //forward code used in loop
 //  Serial.println("forward code");
     //low is nearby, high is far
   in = digitalRead(IRPin);
@@ -400,7 +400,7 @@ void LineFollow() {
 void loop() {
 //  moveForward();
 //  Serial.println(" test");
-  if (process) {
+  if (process) {  //process is true if interrupt is received this loop used to reset interrupt
 //    buff[indx] = 0; Use later for multiple parameters
     process = false; //reset flag
 //    digitalWrite(3,0);
@@ -409,19 +409,19 @@ void loop() {
 //    int i = 0;
    
 //    if (i < sizeof(buff)) {  //Multiple parameteres
-    Serial.println(updated);
-    switch(updated) {
+    Serial.println(updated); //debugging statement prints the value of updated for inspection
+    switch(updated) { //function changes the letter value of updated to a command
       case 'F' : //fwd
 //          Serial.println("moving forward");
         
-        moveForward();
+        moveForward(); //runs move forward function from above
         //digitalWrite(motor0pin2, LOW);
         //digitalWrite(motor0pin1, HIGH);
         //digitalWrite(motor1pin2, LOW);
         //digitalWrite(motor1pin1, HIGH);
         set = 0;
         //delay(6000);
-        break;
+        break; //breaks out of the switch loop and continues the original search
       case 'B' : //Backwards (back())
 //          Serial.println("back");
         digital0 = 0;
@@ -429,7 +429,7 @@ void loop() {
         set = 0;
         PID();
        // delay(6000);
-        break;
+        break; //breaks out of the switch loop and continues the original search
       case 'L' : //left
 //          Serial.println("Left");
         digitalWrite(motor0pin2, LOW);
@@ -438,7 +438,7 @@ void loop() {
         digitalWrite(motor1pin1, LOW);
         set = 0;
         //delay(6000);
-        break;
+        break; //breaks out of the switch loop and continues the original search
       case 'R' : //right
         digitalWrite(motor0pin2, HIGH);
         digitalWrite(motor0pin1, LOW);
@@ -446,27 +446,23 @@ void loop() {
         digitalWrite(motor1pin1, HIGH);
         set = 0;
         //delay(6000);
-        break; 
-      case 'S' : //stop
+        break; //breaks out of the switch loop and continues the original search
+      case 'S' : //stop, makes all pins low
         digitalWrite(motor0pin2, LOW);
         digitalWrite(motor0pin1, LOW);
         digitalWrite(motor1pin2, LOW);
         digitalWrite(motor1pin1, LOW);
         //delay(6000);
         set = 0;
-        break; 
+        break; //breaks out of the switch loop and continues the original search
       case 'T' : //Line Follow mode
-        LineFollow();
-        break; 
+        LineFollow(); //starts line follow 
+        break; //breaks out of the switch loop and continues the original search
 //       case 'M' : //move servo
-
-        break;
-       
-      default:
+      default: //code run when none of the cases are met
         set = 0;
         //i++;
-        break; 
-      
+        break; //breaks out of the switch loop and continues the original search
     }
    // }
   }
