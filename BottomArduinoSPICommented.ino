@@ -23,30 +23,30 @@ int val; //no idea???
 // Define constants for locomotion
 /** Right motor drivers */
 int motor0pin1 = 2;
-int motor0pin2 = 3; //pwm pin, controls voltage signal
+int motor0pin2 = 3; // pwm pin, controls voltage signal
 int pwm0 = 80; 
-int digital0 = 1; 
+int isForward0 = 1; // = whether the right motor moves forward
 
 /** Left motor drivers */
 int motor1pin1 = 8; 
-int motor1pin2 = 5; //pwm pin
+int motor1pin2 = 5; // pwm pin
 int pwm1 = 80; 
-int digital1 = 1; 
+int isForward1 = 1; // = whether the left motor moves forward
 
 // Encoders regulate two motors to spin at same speed
 // For more information, see PID algorithm on ECE documentation
-int encoder0PinA = A1; //J3 motor on board
-int encoder0Pos = 0; //Motor's angular position read by the encoder
+int encoder0PinA = A1; // J3 motor on board
+int encoder0Pos = 0; // Motor's angular position read by the encoder
 int encoder0PinALast = LOW;
 
-int encoder1PinA = A2; //J4 motor on board
+int encoder1PinA = A2; // J4 motor on board
 int encoder1Pos = 0;
 int encoder1PinALast = LOW;
 
 
 int setpoint = 120; // turn rate for comparison (degrees/sec) 
-double Integral0 = 0; //accumulated error with motors from desired number of turns
-double Integral1 = 0; //accumulated error with motors from desired number of turns
+double Integral0 = 0; // accumulated error with motors from desired number of turns
+double Integral1 = 0; // accumulated error with motors from desired number of turns
 int n = LOW;
 int m = LOW;
 
@@ -181,10 +181,10 @@ void adjustPWM() {
   int adjust0 = (kP * (double)error0) + kI * Integral0 + kD * dError0;
   int adjust1 = (kP * (double)error1) + kI * Integral1 + kD * dError1;
 
-  if (digital0 == 0) pwm0 += adjust0;
+  if (isForward0 == 0) pwm0 += adjust0;
   else pwm0 -= adjust0;
 
-  if (digital1 == 0) pwm1 += adjust1;    
+  if (isForward1 == 0) pwm1 += adjust1;    
   else pwm1 -= adjust1;
 
   // cap the pwm values within 0..255
@@ -217,11 +217,11 @@ int calculateSpeed1() {
 
 /** Adjust the speed of motors with the PID algorithm. */
 void PID() {
-  if (digital0 == 1) digitalWrite( motor0pin1, HIGH);
+  if (isForward0 == 1) digitalWrite( motor0pin1, HIGH);
   else digitalWrite( motor0pin1, LOW);
   analogWrite( motor0pin2, pwm0);
 
-  if (digital1 == 1) digitalWrite( motor1pin1, HIGH);
+  if (isForward1 == 1) digitalWrite( motor1pin1, HIGH);
   else digitalWrite( motor1pin1, LOW);
   analogWrite( motor1pin2, pwm1);
 
@@ -279,8 +279,8 @@ void moveForward() {  //forward code used in loop
   }
   else {
     //move
-    digital0 = 1;
-    digital1 = 1;
+    isForward0 = 1;
+    isForward1 = 1;
     PID();
 //    digitalWrite(motor0pin2, LOW);//1 high 2 low is clockwise
 //    digitalWrite(motor0pin1, HIGH);
@@ -404,8 +404,8 @@ void loop() {
         break; //breaks out of the switch loop and continues the original search
       case 'B' : //Backwards (back())
 //          Serial.println("back");
-        digital0 = 0;
-        digital1 = 0;
+        isForward0 = 0;
+        isForward1 = 0;
         set = 0;
         PID();
        // delay(6000);
