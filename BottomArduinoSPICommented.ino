@@ -55,7 +55,7 @@ int lastSpeed0 = 0;
 int encoder1PrevCount = 0;
 int lastSpeed1 = 0;
 
-double timeSec = .5;
+double timeSec = 1; // update rate of the PID algorithm
 
 //PID constants
 //P (proportional) is how much to adjust when turn rate is not equal to set rate. Matters most.
@@ -181,6 +181,7 @@ void adjustPWM() {
   int adjust0 = (kP * (double)error0) + kI * Integral0 + kD * dError0;
   int adjust1 = (kP * (double)error1) + kI * Integral1 + kD * dError1;
 
+  // update pwm values according to the moving direction
   if (isForward0 == 0) pwm0 += adjust0;
   else pwm0 -= adjust0;
 
@@ -217,6 +218,7 @@ int calculateSpeed1() {
 
 /** Adjust the speed of motors with the PID algorithm. */
 void PID() {
+  // Adjust the rotational speeds by the calculated pwm values.
   if (isForward0 == 1) digitalWrite( motor0pin1, HIGH);
   else digitalWrite( motor0pin1, LOW);
   analogWrite( motor0pin2, pwm0);
@@ -246,7 +248,6 @@ void PID() {
 
   //unsigned long CurrentTime = millis();
   //unsigned long ElapsedTime = CurrentTime - StartTime;
-  timeSec = 1.0 ;//(double)( ElapsedTime * .001);
   adjustPWM();
 
 }
