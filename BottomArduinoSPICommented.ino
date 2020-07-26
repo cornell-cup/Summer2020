@@ -218,6 +218,7 @@ int calculateSpeed1() {
 
 /** Adjust the speed of motors with the PID algorithm. */
 void PID() {
+   
   // Adjust the rotational speeds by the calculated pwm values.
   if (isForward0 == 1) digitalWrite( motor0pin1, HIGH);
   else digitalWrite( motor0pin1, LOW);
@@ -227,33 +228,32 @@ void PID() {
   else digitalWrite( motor1pin1, LOW);
   analogWrite( motor1pin2, pwm1);
 
+   
+  // Count the degrees of rotation in 0.5 second for each motors. 
   timeElapsed = 0;
   while ( timeElapsed < 500 ) {
-
-    n = digitalRead(encoder0PinA);
+    n = digitalRead(encoder0PinA); // store the current digital signal of the encoder
     if ((encoder0PinALast == LOW) && (n == HIGH)) {
+      // a switch from HIGH to LOW of the encoder signal marks rotation in 1 degree.
       encoder0Pos++;
     }
+    encoder0PinALast = n; // update the last encoder signal for future comparison
 
-    encoder0PinALast = n;
-
+    // same process for left encoder
     m = digitalRead(encoder1PinA);
     if ((encoder1PinALast == LOW) && (m == HIGH)) {
       encoder1Pos++;
     }
-
     encoder1PinALast = m;
-
   }
 
   //unsigned long CurrentTime = millis();
   //unsigned long ElapsedTime = CurrentTime - StartTime;
   adjustPWM();
-
 }
 
-void moveForward() {  //forward code used in loop
-//  Serial.println("forward code");
+
+void moveForward() {  
     //low is nearby, high is far
   in = digitalRead(IRPin);
 //  Serial.println(in);
@@ -306,6 +306,7 @@ void moveForward() {  //forward code used in loop
 //    Serial.println("stop");
   } 
 }
+
 //***Line follow functions***
 void stop(){
   digitalWrite(motor0pin1,LOW);
@@ -379,40 +380,32 @@ void LineFollow() {
 
 
 void loop() {
-//  moveForward();
-//  Serial.println(" test");
-  if (process) {  //process is true if interrupt is received this loop used to reset interrupt
-//    buff[indx] = 0; Use later for multiple parameters
-    process = false; //reset flag
-//    digitalWrite(3,0);
- //   Serial.println("work");
-//    Serial.print(buff); //print to serial monitor
-//    int i = 0;
    
-//    if (i < sizeof(buff)) {  //Multiple parameteres
+  if (process) {  //process is true if interrupt is received this loop used to reset interrupt
+    process = false; //reset flag
+    // Serial.println("work");
+   
     Serial.println(updated); //debugging statement prints the value of updated for inspection
+     
     switch(updated) { //function changes the letter value of updated to a command
       case 'F' : //fwd
-//          Serial.println("moving forward");
-        
+        // Serial.println("moving forward");
         moveForward(); //runs move forward function from above
-        //digitalWrite(motor0pin2, LOW);
-        //digitalWrite(motor0pin1, HIGH);
-        //digitalWrite(motor1pin2, LOW);
-        //digitalWrite(motor1pin1, HIGH);
         set = 0;
         //delay(6000);
         break; //breaks out of the switch loop and continues the original search
+          
       case 'B' : //Backwards (back())
-//          Serial.println("back");
+        // Serial.println("back");
         isForward0 = 0;
         isForward1 = 0;
         set = 0;
         PID();
-       // delay(6000);
+        // delay(6000);
         break; //breaks out of the switch loop and continues the original search
+          
       case 'L' : //left
-//          Serial.println("Left");
+        // Serial.println("Left");
         digitalWrite(motor0pin2, LOW);
         digitalWrite(motor0pin1, HIGH);
         digitalWrite(motor1pin2, HIGH);
@@ -420,6 +413,7 @@ void loop() {
         set = 0;
         //delay(6000);
         break; //breaks out of the switch loop and continues the original search
+          
       case 'R' : //right
         digitalWrite(motor0pin2, HIGH);
         digitalWrite(motor0pin1, LOW);
@@ -428,6 +422,7 @@ void loop() {
         set = 0;
         //delay(6000);
         break; //breaks out of the switch loop and continues the original search
+          
       case 'S' : //stop, makes all pins low
         digitalWrite(motor0pin2, LOW);
         digitalWrite(motor0pin1, LOW);
@@ -436,16 +431,17 @@ void loop() {
         //delay(6000);
         set = 0;
         break; //breaks out of the switch loop and continues the original search
+          
       case 'T' : //Line Follow mode
         LineFollow(); //starts line follow 
         break; //breaks out of the switch loop and continues the original search
-//       case 'M' : //move servo
+          
+      //case 'M' : //move servo
+          
       default: //code run when none of the cases are met
         set = 0;
-        //i++;
         break; //breaks out of the switch loop and continues the original search
     }
-   // }
   }
   //TODO Case where switching functions 
     //SPDR = data  //sends value to master via SPDR
