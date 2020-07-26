@@ -1,63 +1,54 @@
+/* The script for bottom arduino on Minibot.
+
+   Sensors and motors:
+     IR sensor: J5 port, digital pin 4
+     DC motors and Encoders 
+          right: J6 port, (motor) digital pin 2 and 3, (encoder) analog pin A1
+          left : J7 port, (motor) digital pin 8 and 5, (encoder) analog pin A2
+     Ultrasonic sensor: J10 port, ????Not sure about pins
+     Reflectance sensors
+          right: J10 port, analog pin A3
+          left : J11 port, analog pin A6
+          
+   Functions: move forward/back/left/right, line following 
+*/
+
 #include <SPI.h>
 #include <elapsedMillis.h>
 
 elapsedMillis timeElapsed;
 
-int val;
-//Regulates two motors to spin at same speed for encoder of motor one
+int val; //no idea???
+
+// Define constants for locomotion
+/** Right motor drivers */
+int motor0pin1 = 2;
+int motor0pin2 = 3; //pwm pin, controls voltage signal
+int pwm0 = 80; 
+int digital0 = 1; 
+
+/** Left motor drivers */
+int motor1pin1 = 8; 
+int motor1pin2 = 5; //pwm pin
+int pwm1 = 80; 
+int digital1 = 1; 
+
+// Encoders regulate two motors to spin at same speed
+// For more information, see PID algorithm on ECE documentation
 int encoder0PinA = A1; //J3 motor on board
-//int encoder0PinB = 4;
 int encoder0Pos = 0; //Motor's angular position read by the encoder
 int encoder0PinALast = LOW;
 
-//for encoder for motor two
 int encoder1PinA = A2; //J4 motor on board
-//int encoder1PinB = 8;
 int encoder1Pos = 0;
 int encoder1PinALast = LOW;
 
-int encoderCountpRev = 360;
-//setpoint is turn rate to compare to/reach
-int setpoint = 120; //(degrees/sec) 
+
+int setpoint = 120; // turn rate for comparison (degrees/sec) 
 double Integral0 = 0; //accumulated error with motors from desired number of turns
 double Integral1 = 0; //accumulated error with motors from desired number of turns
 int n = LOW;
 int m = LOW;
-
-//for driver for IN1 and IN2 for motor one
-int motor0pin1 = 2; // J3 on Board //right motors  *******************SWITCH MOTORS IN HARDWARE
-int motor0pin2 = 3; //pwm pin
-int pwm0 = 80; //123
-int digital0 = 1; //0?
-
-//for driver for IN1 and IN2 for motor two
-int motor1pin1 = 8; // J4 on Board //left motors
-int motor1pin2 = 5; //pwm (controls voltage signal) pin
-int pwm1 = 80; //123
-int digital1 = 1; //0?
-
-//**line follow vars
-int set = 0;
-int left_Q = A6;
-int right_Q = A3;
-int left_calib;
-int right_calib;
-//***line follow vars
-int left_threshold;
-int right_threshold;
-
-
-int left_read;
-int right_read;
-
-//CONSTANT TO GET THE REFLECTANCE OF A LINE
-int left_line_refl=870;
-int right_line_refl=835;
-
-int left_line=false;
-int right_line=false;
-
-
 
 int encoder0PrevCount = 0;
 int lastSpeed0 = 0;
@@ -65,6 +56,7 @@ int encoder1PrevCount = 0;
 int lastSpeed1 = 0;
 
 double timeSec = .5;
+
 //PID constants
 //P (proportional) is how much to adjust when turn rate is not equal to set rate. Matters most.
 double kP = 0.25;//0.20 or .15
@@ -72,6 +64,28 @@ double kP = 0.25;//0.20 or .15
 double kI = 0.2;//0.01 or .05
 //D (derivative) how quickly it deviates from set rate. Adjusts quicker for greater rates
 double kD = 0.211;//0.01 or .01
+
+
+// Line follow vars
+int set = 0;
+
+int right_Q = A3;
+int right_calib;
+int right_threshold;
+int right_read;
+
+int left_Q = A6;
+int left_calib;
+int left_threshold;
+int left_read;
+
+
+// Constants to get the reflectance of a lie
+int left_line_refl=870;
+int right_line_refl=835;
+
+int left_line=false;
+int right_line=false;
 
 
 int test;
@@ -89,44 +103,39 @@ long duration,cm;
 
 
 void setup() {  
-
+  Serial.begin(115200);
+  
+// Locomotion
   pinMode (encoder0PinA, INPUT);
-  //  pinMode (encoder0PinB, INPUT);
   pinMode (motor0pin1, OUTPUT);
   pinMode (motor0pin2, OUTPUT);
 
   pinMode (encoder1PinA, INPUT);
-  //pinMode (encoder1PinB, INPUT);
   pinMode (motor1pin1, OUTPUT);
   pinMode (motor1pin2, OUTPUT);
 
-  Serial.begin(115200);
   pinMode(MISO,OUTPUT); //init spi
-  //pinMode(3,OUTPUT);
 
   pinMode(20,OUTPUT);
   pinMode(22,OUTPUT);
   
-//linefollow***************
+// Line follow
   left_calib=analogRead(left_Q);
   right_calib=analogRead(right_Q);
 
   left_threshold = abs((left_calib-left_line_refl)/2);
   right_threshold = abs((right_calib-right_line_refl)/2);
-//linefollow***************
   
+// SPI
   SPCR |= bit (SPE); // slave control register
   indx = 0; //buffer empty
   process = false;
 
-  
   pinMode(interruptPin,INPUT);
   int val = digitalRead(interruptPin);
 
   delay(1000);
   SPI.attachInterrupt();
- // attachInterrupt(digitalPinToInterrupt(interruptPin), tester, LOW); //enable interrupt
-  //val = 1;
 
   
   pinMode(IRPin, INPUT); 
