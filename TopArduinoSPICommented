@@ -1,3 +1,13 @@
+/* The script for top arduino on Minibot.
+
+   Sensors:
+     Buzzer: J3 port, (PWM) analog pin 3
+     RFID sensor: J8, ???
+          
+   Functions: RFID, Sing
+*/
+
+//define notes for buzzer use
 #define NOTE_B0  31
 #define NOTE_C1  33
 #define NOTE_CS1 35
@@ -89,8 +99,10 @@
 #define NOTE_DS8 4978
 #define REST 0
 
+//melody pin 3 same as buzzerPin below
 #define melodyPin 3
 
+//initialize constands for buzzer use
 const int c = 261;
 const int d = 294;
 const int e = 329;
@@ -111,9 +123,11 @@ const int gH = 784;
 const int gSH = 830;
 const int aH = 880;
 
+//initialize PWM pin for buzzer use
+//buzzer uses analog signal to change pitch
 int buzzerPin = 3;
 
-
+//mario melody
 int melody[] = {
   NOTE_E7, NOTE_E7, 0, NOTE_E7,
   0, NOTE_C7, NOTE_E7, 0,
@@ -140,6 +154,7 @@ int melody[] = {
   0, NOTE_E7, 0, NOTE_C7,
   NOTE_D7, NOTE_B6, 0, 0
 };
+
 //Mario main them tempo
 int tempo[] = {
   12, 12, 12, 12,
@@ -167,6 +182,8 @@ int tempo[] = {
   12, 12, 12, 12,
   12, 12, 12, 12,
 };
+
+
 //Underworld melody
 int underworld_melody[] = {
   NOTE_C4, NOTE_C5, NOTE_A3, NOTE_A4,
@@ -189,7 +206,8 @@ int underworld_melody[] = {
   NOTE_AS3, NOTE_A3, NOTE_GS3,
   0, 0, 0
 };
-//Underwolrd tempo
+
+//Underworld tempo
 int underworld_tempo[] = {
   12, 12, 12, 12,
   12, 12, 6,
@@ -212,12 +230,11 @@ int underworld_tempo[] = {
   3, 3, 3
 };
 
-
+//Harry Potter tempo
 // change this to make the song slower or faster
 int tempoHarry = 144;
 
 int melodyHarry[] = {
-
   // Hedwig's theme fromn the Harry Potter Movies
   // Socre from https://musescore.com/user/3811306/scores/4906610
   
@@ -258,6 +275,8 @@ int melodyHarry[] = {
   NOTE_G4, -1, 
   
 };
+
+
 // sizeof gives the number of bytes, each int value is composed of two bytes (16 bits)
 // there are two values per note (pitch and duration), so for each note there are four bytes
 int notes = sizeof(melodyHarry) / sizeof(melodyHarry[0]) / 2;
@@ -338,8 +357,6 @@ ISR (SPI_STC_vect) //SPI Interrupt Service Routine
 
 void loop() {
 
-
-
 Serial.println("go");
   if (process) {
     buff[indx] = 0;
@@ -360,9 +377,7 @@ Serial.println("go");
   }
 
     //SPDR = data  //sends value to master via SPDR
-    indx = 0; //reset button to zero
-    
-    
+    indx = 0; //reset button to zero  
 }
 
 void RFID(){
