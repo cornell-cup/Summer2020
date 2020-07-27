@@ -18,8 +18,6 @@
 
 elapsedMillis timeElapsed;
 
-int val; //no idea???
-
 // Define constants for locomotion
 /** Right motor drivers */
 int motor0pin1 = 2;
@@ -80,7 +78,7 @@ int left_threshold;
 int left_read;
 
 
-// Constants to get the reflectance of a lie
+// Constants to get the reflectance of a lie, adjustable to fit line in use
 int left_line_refl=870;
 int right_line_refl=835;
 
@@ -119,13 +117,6 @@ void setup() {
   pinMode(20,OUTPUT);
   pinMode(22,OUTPUT);
   
-// Line follow
-  left_calib=analogRead(left_Q);
-  right_calib=analogRead(right_Q);
-
-  left_threshold = abs((left_calib-left_line_refl)/2);
-  right_threshold = abs((right_calib-right_line_refl)/2);
-  
 // SPI
   SPCR |= bit (SPE); // slave control register
   indx = 0; //buffer empty
@@ -159,6 +150,7 @@ ISR (SPI_STC_vect) { //SPI Interrupt Service Routine
 }  
 
 /** Adjust PWM for PID algorithm */
+//add specification for PWM and pins
 void adjustPWM() {
   int speedNow0 = calculateSpeed0(); // calculate the current speed for the right motor
   int error0 = setpoint - speedNow0; // calculate the error between the current speed and the set speed
@@ -349,8 +341,9 @@ void LineFollow() {
 //    Serial.println(right_calib);
 //    Serial.println(left_threshold);
 //    Serial.println(right_threshold);
+    set = 1;
   }
-  set++;  
+ 
     readSensors();
 //    Serial.print("LEFT SENSOR: ");
 //    Serial.println(analogRead(left_Q));
@@ -375,8 +368,7 @@ void LineFollow() {
 //      Serial.println("forward else");
     }
 }
-
-//**Line follow functions***
+//line follow functions
 
 
 void loop() {
@@ -391,7 +383,7 @@ void loop() {
       case 'F' : //fwd
         // Serial.println("moving forward");
         moveForward(); //runs move forward function from above
-        set = 0;
+        set = 0; //sets up for line follow mode
         //delay(6000);
         break; //breaks out of the switch loop and continues the original search
           
@@ -406,19 +398,19 @@ void loop() {
           
       case 'L' : //left
         // Serial.println("Left");
-        digitalWrite(motor0pin2, LOW);
-        digitalWrite(motor0pin1, HIGH);
-        digitalWrite(motor1pin2, HIGH);
-        digitalWrite(motor1pin1, LOW);
+        digitalWrite(motor0pin2, LOW); //right motor, forward
+        digitalWrite(motor0pin1, HIGH); 
+        digitalWrite(motor1pin2, HIGH); //left motor, backward
+        digitalWrite(motor1pin1, LOW); 
         set = 0;
         //delay(6000);
         break; //breaks out of the switch loop and continues the original search
           
       case 'R' : //right
-        digitalWrite(motor0pin2, HIGH);
+        digitalWrite(motor0pin2, HIGH);//right motor, backward
         digitalWrite(motor0pin1, LOW);
-        digitalWrite(motor1pin2, LOW);
-        digitalWrite(motor1pin1, HIGH);
+        digitalWrite(motor1pin2, LOW);//left motor, forward
+        digitalWrite(motor1pin1, HIGH); 
         set = 0;
         //delay(6000);
         break; //breaks out of the switch loop and continues the original search
@@ -435,8 +427,6 @@ void loop() {
       case 'T' : //Line Follow mode
         LineFollow(); //starts line follow 
         break; //breaks out of the switch loop and continues the original search
-          
-      //case 'M' : //move servo
           
       default: //code run when none of the cases are met
         set = 0;
