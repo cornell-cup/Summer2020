@@ -155,7 +155,7 @@ int melody[] = {
   NOTE_D7, NOTE_B6, 0, 0
 };
 
-//Mario main them tempo
+//Mario main theme tempo
 int tempo[] = {
   12, 12, 12, 12,
   12, 12, 12, 12,
@@ -280,6 +280,7 @@ int melodyHarry[] = {
 // sizeof gives the number of bytes, each int value is composed of two bytes (16 bits)
 // there are two values per note (pitch and duration), so for each note there are four bytes
 int notes = sizeof(melodyHarry) / sizeof(melodyHarry[0]) / 2;
+//calculaes number of values in an array and divides by 2 as each note has two parts
 
 // this calculates the duration of a whole note in ms (60s/tempo)*4 beats
 int wholenote = (60000 * 4) / tempoHarry;
@@ -288,22 +289,21 @@ int divider = 0, noteDuration = 0;
 
 #include <SPI.h>
 #include <Wire.h>
-#include <Adafruit_PN532.h>
+#include <Adafruit_PN532.h> //RFID Library
 
 
 #define PN532_IRQ   (17)   //set up the interrupt and reset
 #define PN532_RESET (9)  
 int val;
 char buff [50];
-volatile byte indx;
+volatile byte indx; //volatile (value can be changed by concurrently executing code (in the ISR))
 volatile boolean process;
 int  interruptPin = 10;
 
-//initialize the RFID
+//initialize the RFID with I2C connection
 Adafruit_PN532 nfc(PN532_IRQ, PN532_RESET);
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(115200);
   pinMode(MISO,OUTPUT); //init spi
   pinMode(3,OUTPUT);
@@ -312,10 +312,10 @@ void setup() {
   indx = 0; //buffer empty
   process = false;
   
-  //RFID reader
+  //RFID reader startup
   nfc.begin(); 
   uint32_t versiondata = nfc.getFirmwareVersion();
-  if (! versiondata) {
+  if (! versiondata) { //checks connection to board
     Serial.print("Didn't find PN53x board");
     while (1); // halt
   }
@@ -332,22 +332,22 @@ void setup() {
   nfc.SAMConfig();
   
   pinMode(interruptPin,INPUT);
-  int val = digitalRead(interruptPin);
+  int val = digitalRead(interruptPin); //allows ISR to receive data
 
   delay(1000);
-  SPI.attachInterrupt();
+  SPI.attachInterrupt(); //initializes interrupt
  // attachInterrupt(digitalPinToInterrupt(interruptPin), tester, LOW); //enable interrupt
   //val = 1;
   //Serial.print(val);
   }
 
-ISR (SPI_STC_vect) //SPI Interrupt Service Routine
-//void tester() 
-{
+ISR (SPI_STC_vect) { //SPI Interrupt Service Routine
  // digitalWrite(3,1);
-  //Serial.println("work");
+  Serial.println("entered ISR"); //debugging print line to indicate interrupt has been entered
+  if (SPDR != c) //if new value does not equal old value
+     Serial.println("Value has been changed"); //debugging print line to show value updated
   byte c = SPDR; //read byte from SPI data register
-  if (indx < sizeof (buff) - 1) 
+  if (indx < sizeof (buff) - 1)  //if the value of index is within the range of a byte (0-7)
     buff [indx++] = c;// save data in the next index in the array buff
  // if (c == '\r') //check for the end of the word
     process = true;
@@ -357,19 +357,19 @@ ISR (SPI_STC_vect) //SPI Interrupt Service Routine
 
 void loop() {
 
-Serial.println("go");
-  if (process) {
-    buff[indx] = 0;
+Serial.println("entered loop"); //debugging statement, entered loop
+  if (process) { //if inturrupt received
+    buff[indx] = 0; //set the index at indx of buff to 0
     process = false; //reset flag
 //    digitalWrite(3,0);
  //   Serial.println("work");
-    Serial.print(buff); //print to serial monitor
+    Serial.print(buff); //print to serial monitor, debugging
     int i = 0;
-    if (i < sizeof(buff)) {
-      switch(buff[i]) {         
+    if (i < sizeof(buff)) { //if the value of i is between (1-8) or a byte
+      switch(buff[i]) {  //if the index of buff at i is...       
         case 'O': //object detection
-          RFID();         
-        default:
+          RFID(); //run RFID function        
+        default: //anything else then add a value to i and rerun loop
           i++;
           break; 
       }
@@ -380,46 +380,46 @@ Serial.println("go");
     indx = 0; //reset button to zero  
 }
 
-void RFID(){
-  // RFID 
-  Serial.println("Hello");
+void RFID(){  // RFID function
+  Serial.println("entered RFID function");
   boolean detector;
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID from tag
-  uint8_t obj1[] = {0xB9, 0xC3, 0xD, 0xF4}; //the tag on the LED panel
-  uint8_t obj2[] = {0xB9, 0x12, 0xD, 0xF4}; //the tag on the micrstickII
-  uint8_t obj3[] = {0xC9, 0x82, 0xC, 0xF4};  //for the blue key tags
-  uint8_t uidLength;
+  uint8_t uidLength; //Length of the UID (4 or 7 bytes depending on ISO14443A card type
+  
+  //tags we have currently, labeled by color
+  uint8_t obj1[] = {0xB9, 0xC3, 0xD, 0xF4}; //the tag on the LED panel, Green Tower
+  uint8_t obj2[] = {0xB9, 0x12, 0xD, 0xF4}; //the tag on the micrstickII, Yellow Tower
+  uint8_t obj3[] = {0xC9, 0x82, 0xC, 0xF4};  //for the blue key tags, Red Tower
 
   Serial.println("Sensor ready!");
   detector = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
-      //Comment again if not right^
-      if(detector){
-      Serial.println("Found a tag!");
-      Serial.println("This is .....");
-      if(memcmp(obj1, uid, 4) == 0){
-        Serial.println("Object 1");
-        sing(1);
+      if(detector){ //if true, object in range
+      Serial.println("Found a tag!"); //debugging print statement
+      Serial.println("This is ....."); //identification
+      if(memcmp(obj1, uid, 4) == 0){ //if obj1 is the same as uid for the first four indices 
+        Serial.println("Object 1"); //debugging statement
+        sing(1); //run sing function with parameter 1
       }
       
-      else if (memcmp(obj2, uid, 4) == 0){
-        Serial.println("Object 2");
-        firstSection();
+      else if (memcmp(obj2, uid, 4) == 0){ //if obj2 is the same as uid for the first four indices
+        Serial.println("Object 2"); //debugging statement
+        firstSection(); //run firstSection function
       }
 
-      else if(memcmp(obj3, uid, 4) == 0){
-        Serial.println("Object 3");
-        harryPotter();
+      else if(memcmp(obj3, uid, 4) == 0){ //if obj3 is the same as uid for the first four indices
+        Serial.println("Object 3"); //debugging statement
+        harryPotter(); //run harryPotter
       }
       
-      else{
-        Serial.println("Not in database");
+      else{ //if the buffer does not match any known objects
+        Serial.println("Not in database"); //debugging statment
         delay(1000);
       }
     
       delay(1000); 
   
     }
-    else{
+    else{ // if detector is false, no object in range
       Serial.println("No Objects in Range");    
     }
   
@@ -467,6 +467,7 @@ void firstSection()
   delay(500);
 }
  
+/* unused function
 void secondSection()
 {
   beep(aH, 500);
@@ -491,9 +492,9 @@ void secondSection()
  
   delay(350);
 }
+*/
 
-
-int song = 0;
+int song = 0; //initialize variable for sing function
 
 void sing(int s) {
   // iterate over the notes of the melody:
