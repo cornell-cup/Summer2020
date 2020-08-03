@@ -366,7 +366,7 @@ Serial.println("entered loop"); //debugging statement, entered loop
     Serial.print(buff); //print to serial monitor, debugging
     int i = 0;
     if (i < sizeof(buff)) { //if the value of i is between (1-8) or a byte
-      switch(buff[i]) {  //if the index of buff at i is...       
+      switch(buff[i]) {  //if the index of buff at i is... (checks buffer for RFID mode)      
         case 'O': //object detection
           RFID(); //run RFID function        
         default: //anything else then add a value to i and rerun loop
@@ -398,12 +398,12 @@ void RFID(){  // RFID function
       Serial.println("This is ....."); //identification
       if(memcmp(obj1, uid, 4) == 0){ //if obj1 is the same as uid for the first four indices 
         Serial.println("Object 1"); //debugging statement
-        sing(1); //run sing function with parameter 1
+        sing(1); //run sing function with parameter 1 (Mario)
       }
       
       else if (memcmp(obj2, uid, 4) == 0){ //if obj2 is the same as uid for the first four indices
         Serial.println("Object 2"); //debugging statement
-        firstSection(); //run firstSection function
+        firstSection(); //run firstSection function (Underworld)
       }
 
       else if(memcmp(obj3, uid, 4) == 0){ //if obj3 is the same as uid for the first four indices
@@ -426,7 +426,7 @@ void RFID(){  // RFID function
 }
 
 
-void beep(int note, int duration)
+void beep(int note, int duration) //Function used in Underworld Theme Theme
 {
   //Play tone on buzzerPin
   tone(buzzerPin, note, duration);
@@ -440,7 +440,7 @@ void beep(int note, int duration)
  
 }
  
-void firstSection()
+void firstSection() //Underworld Theme (if song==2 doesn't work then remove and only keep this function)
 {
   beep(a, 500);
   beep(a, 500);    
@@ -496,10 +496,10 @@ void secondSection()
 
 int song = 0; //initialize variable for sing function
 
-void sing(int s) {
+void sing(int s) { //Mario Theme
   // iterate over the notes of the melody:
   song = s;
-  if (song == 2) {
+  if (song == 2) { //song never equals 2, so skips to else
     Serial.println(" 'Underworld Theme'");
     int size = sizeof(underworld_melody) / sizeof(int);
     for (int thisNote = 0; thisNote < size; thisNote++) {
@@ -521,7 +521,7 @@ void sing(int s) {
 
     }
 
-  } else {
+  } else { //always runs when sing is run as song always equals 1
 
     Serial.println(" 'Mario Theme'");
     int size = sizeof(melody) / sizeof(int);
@@ -547,7 +547,7 @@ void sing(int s) {
   }
 }
 
-void buzz(int targetPin, long frequency, long length) {
+void buzz(int targetPin, long frequency, long length) { //function used in Mario Theme
   digitalWrite(13, HIGH);
   long delayValue = 1000000 / frequency / 2; // calculate the delay value between transitions
   //// 1 second's worth of microseconds, divided by the frequency, then split in half since
@@ -565,7 +565,7 @@ void buzz(int targetPin, long frequency, long length) {
 
 }
 
-void harryPotter(){
+void harryPotter(){ //harry potter music 
   // iterate over the notes of the melody. 
   // Remember, the array is twice the number of notes (notes + durations)
   divider = 0;
