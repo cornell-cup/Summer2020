@@ -56,13 +56,13 @@ int lastSpeed1 = 0;
 double timeSec = 1; // update rate of the PID algorithm
 
 //Precision Turning Parameters and Constants
-const unsigned int DEF_LATERAL_WH_SPD = 120;
-const unsigned int INNER_MOTOR_FULL_TURN_CT = 400; //Initial guess for how many encoder counts for the inner motor encoder in order to achieve a 45 degree turn with given Inner motor pwm and Outer motor pwm
-const unsigned int OUTER_MOTOR_FULL_TURN_CT = 500; //Initial guess for how many encoder counts for the outer motor encoder in order to achieve a 45 degree turn with given Inner motor pwm and Outer motor pwm
-const int INNER_MOTOR_SETPOINT = 70;
-const int OUTER_MOTOR_SETPOINT = 120;
-unsigned int DEFAULT_TURN_DEGREE = 45;
-unsigned int turnDegrees = 0;
+const unsigned int DEF_LATERAL_WH_SPD = 120; //Default wheel speed for lateral movement, does not apply for turns
+const unsigned int INNER_MOTOR_FULL_TURN_CT = 400; //Initial guess for how many encoder counts for the inner motor encoder in order to achieve a 360 degree turn with given Inner motor speed and Outer motor speed
+const unsigned int OUTER_MOTOR_FULL_TURN_CT = 500; //Initial guess for how many encoder counts for the outer motor encoder in order to achieve a 360 degree turn with given Inner motor speed and Outer motor speed
+const int INNER_MOTOR_SETPOINT = 70; //Initial guess for how target speed for inner wheel during turning, could be off, needs ECE check to see if realistic
+const int OUTER_MOTOR_SETPOINT = 120; //Initial guess for how target speed for outer wheel during turning, could be off, needs ECE check to see if realistic
+unsigned int DEFAULT_TURN_DEGREE = 45; //Default turn degree if not specified by user in blockly
+unsigned int turnDegrees = 0; //Variable used to change turn degree if different from the default
 //const unsigned double WHEEL_DISTANCE = 50; //distance between the two wheel measured in mm, to be used in speed/position control
 //const unsigned double WHEEL_CIRCUMFERENCE = 14; //wheel circumference as measured in mm, all wheels are assumed equivalent
 //int ANGULAR_SPEED = 15; //angular speed setpoint from center point for default turn
@@ -188,8 +188,6 @@ void adjustPWM(char action = 'F') {
    	setPointL = INNER_MOTOR_SETPOINT;
 	setPointR = OUTER_MOTOR_SETPOINT;
    }
-
-  }
   
   int speedNow0 = calculateSpeed0(); // calculate the current speed for the right motor
   int error0 = setpointR - speedNow0; // calculate the error between the current speed and the set speed
@@ -223,7 +221,7 @@ void adjustPWM(char action = 'F') {
   if (pwm0 > 255) pwm0 = 255;
   else if (pwm0 < 0) pwm0 = 0;
   
-  f (pwm1 > 255) pwm1 = 255;
+  if (pwm1 > 255) pwm1 = 255;
   else if (pwm1 < 0) pwm1 = 0;
 
   // store the current speeds
@@ -246,33 +244,35 @@ int calculateSpeed1() {
   return speedDetect;
 }
 
-//allow for using encoder counts both in the PID algorithm and the precision turning emails
+//allow for using encoder counts both in the PID algorithm and the precision turning functions
 void updateCounts(){
   n = digitalRead(encoder0PinA); // store the current digital signal of the encoder
     if ((encoder0PinALast == LOW) && (n == HIGH)) {
       // a switch from HIGH to LOW of the encoder signal marks rotation in 1 degree.
       encoder0Pos++;
-    }
-    encoder0PinALast = n; // update the last encoder signal for future comparison
+     }
+     encoder0PinALast = n; // update the last encoder signal for future comparison
 
     // same process for left encoder
     m = digitalRead(encoder1PinA);
     if ((encoder1PinALast == LOW) && (m == HIGH)) {
       encoder1Pos++;
-    }
-    encoder1PinALast = m;
+     }
+     encoder1PinALast = m;
 }
 
 int calculateTurnTicksI(int deg){
-	return (double (INNER_MOTOR_FULL_TURN_CT) / 360) * deg 
+	return (double (INNER_MOTOR_FULL_TURN_CT) / 360) * deg; 
 }
 
 int calculateTurnTicksO(int deg){
-        return (double (OUTER_MOTOR_FULL_TURN_CT) / 360) * deg
+        return (double (OUTER_MOTOR_FULL_TURN_CT) / 360) * deg;
 }
 
 
-/** Adjust the speed of motors with the PID algorithm. */
+/** Adjust the speed of motors with the PID algorithm. 
+    Arguments: char mvmt: this is the same char used in the SPI switch function to determine whether to go foward, backward, left, right, etc
+    No line follow integraion**/
 void PID(char mvmt = 'F') {
   
   char movement = mvmt;
@@ -286,7 +286,7 @@ void PID(char mvmt = 'F') {
   analogWrite( motor1pin2, pwm1);
 
     // Count the degrees of rotation in 0.5 second for each motors. 
-  long startTime = millis();
+    long startTime = millis();
     while ( timeElapsed < 500 ) {
     updateCounts();
     timeElapsed = millis() - startTime;
@@ -451,12 +451,14 @@ void loop() {
           
       case 'L' : //left
         // Serial.println("Left");
-        /**if(buff[1] == 0)
+        //Below shows how we might be able to add an additional aommand passed over spi to tell the robot how many degrees to turn
+	/**if(buff[1] == 0)
 		turnDegrees = DEF_TURN_DEGREE;
 	  else 
 	  	turnDegrees = buff[1];
 
 	**/
+	turnDegrees = DEF_TURN_DEGREE;
 	digitalWrite(motor0pin2, LOW); //right motor, forward
         digitalWrite(motor0pin1, HIGH); 
         digitalWrite(motor1pin2, HIGH); //left motor, backward
@@ -477,12 +479,14 @@ void loop() {
           
       case 'R' : //right
       	// Serial.println("Right");
+	//Below shows how we might be able to add an additional aommand passed over spi to tell the robot how many degrees to turn
         /**if(buff[1] == 0)
                 turnDegrees = DEF_TURN_DEGREE;
           else
                 turnDegrees = buff[1];
 
         **/
+	turnDegrees = DEF_TURN_DEGREE;
         digitalWrite(motor0pin2, HIGH);//right motor, backward
         digitalWrite(motor0pin1, LOW);
         digitalWrite(motor1pin2, LOW);//left motor, forward
