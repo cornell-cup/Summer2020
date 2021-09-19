@@ -138,9 +138,9 @@ void setup() {
 ISR (SPI_STC_vect) { //SPI Interrupt Service Routine
  // digitalWrite(3,1);
   Serial.println("entered ISR"); //debugging print line to indicate the beginning of the interrupt sequence
+  byte c = SPDR; //read byte from SPI data register
   if (SPDR != c)  //if the new value does not equal the value already contained in SPDR
     Serial.println("Value has been changed"); //debugging print line to show value has changed successfully
-  byte c = SPDR; //read byte from SPI data register
   updated = c;// save data in the next index in the array buff
   Serial.print("ISR Value: ");
   Serial.println(updated); //debugging statement to check if value has been changed successfully
